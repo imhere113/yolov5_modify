@@ -70,3 +70,8 @@ class FReLU(nn.Module):
 
     def forward(self, x):
         return torch.max(x, self.bn(self.conv(x)))
+
+class ReLU(nn.Module): 
+    @staticmethod
+    def forward(x):
+        return nn.ReLU(x)

@@ -15,7 +15,7 @@ import torch.nn as nn
 
 import models
 from models.experimental import attempt_load
-from utils.activations import Hardswish, SiLU
+from utils.activations import Hardswish, SiLU , ReLU
 from utils.general import set_logging, check_img_size
 
 if __name__ == '__main__':
@@ -40,13 +40,14 @@ if __name__ == '__main__':
     # Input
     img = torch.zeros(opt.batch_size, 3, *opt.img_size)  # image size(1,3,320,192) iDetection
 
-    # Update model
+    #Update model
     for k, m in model.named_modules():
         m._non_persistent_buffers_set = set()  # pytorch 1.6.0 compatibility
         if isinstance(m, models.common.Conv):  # assign export-friendly activations
             if isinstance(m.act, nn.Hardswish):
                 m.act = Hardswish()
             elif isinstance(m.act, nn.SiLU):
+                print('cjy silucjy silu cjy silu cjy silu')
                 m.act = SiLU()
         # elif isinstance(m, models.yolo.Detect):
         #     m.forward = m.forward_export  # assign forward (optional)
@@ -66,10 +67,9 @@ if __name__ == '__main__':
     # ONNX export
     try:
         import onnx
-
         print('\nStarting ONNX export with onnx %s...' % onnx.__version__)
         f = opt.weights.replace('.pt', '.onnx')  # filename
-        torch.onnx.export(model, img, f, verbose=False, opset_version=12, input_names=['images'],
+        torch.onnx.export(model, img, f, verbose=False, opset_version=9, input_names=['images'],
                           output_names=['classes', 'boxes'] if y is None else ['output'])
 
         # Checks
@@ -81,17 +81,17 @@ if __name__ == '__main__':
         print('ONNX export failure: %s' % e)
 
     # CoreML export
-    try:
-        import coremltools as ct
+    # try:
+    #     import coremltools as ct
 
-        print('\nStarting CoreML export with coremltools %s...' % ct.__version__)
-        # convert model from torchscript and apply pixel scaling as per detect.py
-        model = ct.convert(ts, inputs=[ct.ImageType(name='image', shape=img.shape, scale=1 / 255.0, bias=[0, 0, 0])])
-        f = opt.weights.replace('.pt', '.mlmodel')  # filename
-        model.save(f)
-        print('CoreML export success, saved as %s' % f)
-    except Exception as e:
-        print('CoreML export failure: %s' % e)
+    #     print('\nStarting CoreML export with coremltools %s...' % ct.__version__)
+    #     # convert model from torchscript and apply pixel scaling as per detect.py
+    #     model = ct.convert(ts, inputs=[ct.ImageType(name='image', shape=img.shape, scale=1 / 255.0, bias=[0, 0, 0])])
+    #     f = opt.weights.replace('.pt', '.mlmodel')  # filename
+    #     model.save(f)
+    #     print('CoreML export success, saved as %s' % f)
+    # except Exception as e:
+    #     print('CoreML export failure: %s' % e)
 
-    # Finish
-    print('\nExport complete (%.2fs). Visualize with https://github.com/lutzroeder/netron.' % (time.time() - t))
+    # # Finish
+    # print('\nExport complete (%.2fs). Visualize with https://github.com/lutzroeder/netron.' % (time.time() - t))
